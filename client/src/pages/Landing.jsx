@@ -55,12 +55,18 @@ function Landing() {
     setError('');
     socket.emit('createRoom', { playerName: playerName.trim() }, (response) => {
       if (response.success) {
+        // Cache for recovery
+        localStorage.setItem('codeRed_roomCode', response.roomCode);
+        localStorage.setItem('codeRed_playerId', response.playerId);
+        localStorage.setItem('codeRed_playerName', playerName.trim());
+
         navigate('/lobby', {
           state: {
             roomCode: response.roomCode,
             playerId: response.playerId,
             playerName: playerName.trim(),
-            isHost: true
+            isHost: true,
+            room: response.room
           }
         });
       } else {
@@ -89,12 +95,18 @@ function Landing() {
       (response) => {
         setIsJoining(false);
         if (response.success) {
+          // Cache for recovery
+          localStorage.setItem('codeRed_roomCode', roomCode.toUpperCase());
+          localStorage.setItem('codeRed_playerId', response.playerId);
+          localStorage.setItem('codeRed_playerName', playerName.trim());
+
           navigate('/lobby', {
             state: {
               roomCode: roomCode.toUpperCase(),
               playerId: response.playerId,
               playerName: playerName.trim(),
-              isHost: false
+              isHost: false,
+              room: response.room
             }
           });
         } else {
