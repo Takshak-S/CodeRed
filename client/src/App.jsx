@@ -5,6 +5,7 @@ import Landing from './pages/Landing';
 import Lobby from './pages/Lobby';
 import Game from './pages/Game';
 import Result from './pages/Result';
+// import EditorTest from './pages/EditorTest';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/lobby" element={<Lobby />} />
         <Route path="/game" element={<Game />} />
         <Route path="/result" element={<Result />} />
+        {/* <Route path="/editor" element={<EditorTest />} /> */}
       </Routes>
     </Router>
   );
