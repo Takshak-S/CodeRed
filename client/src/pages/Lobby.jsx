@@ -245,8 +245,8 @@ const GameLobby = () => {
       {/* Header */}
       <header className="lobby-header">
         <div className="logo">
-          <span className="dev">DEV</span>
-          <span className="hunter">HUNTER</span>
+          <span className="dev">CODE</span>
+          <span className="hunter">RED</span>
         </div>
         <div className="header-room">
           <span className="room-label">ROOM:</span>

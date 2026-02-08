@@ -142,9 +142,6 @@ const codeSamples = [
   }
 ];
 
-/**
- * Create a new game room
- */
 function createRoom(roomCode, hostId, hostName) {
   const room = {
     code: roomCode,
@@ -179,16 +176,12 @@ function createRoom(roomCode, hostId, hostName) {
   return room;
 }
 
-/**
- * Get room by code
- */
+
 function getRoom(roomCode) {
   return rooms.get(roomCode);
 }
 
-/**
- * Add player to room
- */
+
 function addPlayerToRoom(roomCode, playerId, playerName) {
   const room = rooms.get(roomCode);
   if (!room) return null;
@@ -214,9 +207,7 @@ function addPlayerToRoom(roomCode, playerId, playerName) {
   return room;
 }
 
-/**
- * Remove player from room
- */
+
 function removePlayerFromRoom(roomCode, playerId) {
   const room = rooms.get(roomCode);
   if (!room) return null;
@@ -240,9 +231,6 @@ function removePlayerFromRoom(roomCode, playerId) {
   return room;
 }
 
-/**
- * Start the game
- */
 function startGame(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return null;
@@ -259,9 +247,7 @@ function startGame(roomCode) {
   return room;
 }
 
-/**
- * Assign roles to players
- */
+
 function assignRoles(room) {
   const playerIds = Array.from(room.players.keys());
   const shuffled = shuffleArray(playerIds);
@@ -277,9 +263,6 @@ function assignRoles(room) {
   });
 }
 
-/**
- * Start a new round
- */
 function startRound(room) {
   // Select random code sample
   const sample = randomElement(codeSamples);
@@ -294,9 +277,6 @@ function startRound(room) {
   room.buzzedPlayer = null;
 }
 
-/**
- * Handle buzz from debugger
- */
 function handleBuzz(roomCode, playerId) {
   const room = rooms.get(roomCode);
   if (!room || room.gameState !== 'playing') return null;
@@ -315,9 +295,6 @@ function handleBuzz(roomCode, playerId) {
   return room;
 }
 
-/**
- * Validate bug fix
- */
 function validateFix(roomCode, playerId, fixedCode) {
   const room = rooms.get(roomCode);
   if (!room) return null;
@@ -337,9 +314,7 @@ function validateFix(roomCode, playerId, fixedCode) {
   return { isCorrect, room };
 }
 
-/**
- * End current round
- */
+
 function endRound(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return null;
@@ -362,9 +337,6 @@ function endRound(roomCode) {
   return room;
 }
 
-/**
- * Reset game for rematch
- */
 function resetGame(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return null;
@@ -391,12 +363,39 @@ function resetGame(roomCode) {
   return room;
 }
 
-/**
- * Get all rooms (for debugging)
- */
 function getAllRooms() {
   return Array.from(rooms.values());
 }
+
+function getRoomStats() {
+  const allRooms = Array.from(rooms.values());
+  const totalPlayers = allRooms.reduce((sum, room) => sum + room.players.size, 0);
+  const activeGames = allRooms.filter(r => r.gameState === 'playing').length;
+  const lobbyRooms = allRooms.filter(r => r.gameState === 'lobby').length;
+  
+  return {
+    totalRooms: allRooms.length,
+    totalPlayers,
+    activeGames,
+    lobbyRooms,
+    roomsInResults: allRooms.filter(r => r.gameState === 'results').length
+  };
+}
+
+function cleanupOldRooms() {
+  const TWO_HOURS = 2 * 60 * 60 * 1000;
+  const now = Date.now();
+  
+  for (const [code, room] of rooms.entries()) {
+    if (now - room.createdAt > TWO_HOURS) {
+      rooms.delete(code);
+      console.log(`Cleaned up old room: ${code}`);
+    }
+  }
+}
+
+// Run cleanup every 30 minutes
+setInterval(cleanupOldRooms, 30 * 60 * 1000);
 
 module.exports = {
   createRoom,
@@ -409,5 +408,6 @@ module.exports = {
   endRound,
   resetGame,
   getAllRooms,
+  getRoomStats,
   codeSamples
 };
