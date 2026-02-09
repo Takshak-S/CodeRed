@@ -1,4 +1,3 @@
-// Main server entry point
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -8,7 +7,6 @@ const { setupSocketHandlers } = require('./socketHandlers');
 const app = express();
 const server = http.createServer(app);
 
-// Configure CORS
 app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true
@@ -16,7 +14,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// Setup Socket.IO with CORS
 const io = new Server(server, {
   cors: {
     origin: 'http://localhost:3000',

@@ -1,4 +1,3 @@
-// Timer component
 import React, { useEffect, useState } from 'react';
 
 function Timer({ duration, onTimeUp }) {

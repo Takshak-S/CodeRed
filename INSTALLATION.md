@@ -166,4 +166,4 @@ If you encounter any issues:
 3. Check the terminal/console for error messages
 4. Try deleting `node_modules/` and running `npm install` again
 
-Happy Bug Hunting! 🐛🔴
+Happy Bug Hunting! 
