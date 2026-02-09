@@ -72,31 +72,8 @@ const codeSamples = [
   }
 
 
-  // Memory Operations
-  memoryStore(value) {
-    this.memory = value;
-    this.history.push(\`Memory stored: \${value}\`);
-    return this.memory;
-  }
-
-  memoryRecall() {
-    this.history.push(\`Memory recalled: \${this.memory}\`);
-    return this.memory;
-  }
-
-  memoryClear() {
-    this.memory = 0;
-    this.history.push('Memory cleared');
-    return this.memory;
-  }
-
   getHistory() {
     return this.history;
-  }
-
-  clearHistory() {
-    this.history = [];
-    return 'History cleared';
   }
 }`,
     bugs: [

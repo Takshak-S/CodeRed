@@ -1,5 +1,5 @@
-// Code validation module using isolated-vm for secure sandboxed execution
-const ivm = require('isolated-vm');
+// Code validation module using Node.js vm for sandboxed execution
+const vm = require('vm');
 
 // Dangerous patterns to block
 const DANGEROUS_PATTERNS = [
@@ -59,68 +59,52 @@ function checkSafety(code) {
 }
 
 /**
- * Run code in isolated sandbox and execute test cases
+ * Run code in sandbox and execute test cases
  */
 async function runTestCases(code, functionName, testCases) {
   const results = [];
-  
-  // Create a new isolate with memory limit
-  const isolate = new ivm.Isolate({ memoryLimit: 32 }); // 32MB limit
-  
-  try {
-    for (const testCase of testCases) {
-      const context = await isolate.createContext();
-      const jail = context.global;
-      
-      // Set up minimal global environment
-      await jail.set('global', jail.derefInto());
-      
-      try {
-        // Compile and run the function definition
-        const script = await isolate.compileScript(code);
-        await script.run(context, { timeout: 1000 });
-        
-        // Prepare test input as JSON
-        const inputJson = JSON.stringify(testCase.input);
-        
-        // Call the function with test input
-        const callScript = await isolate.compileScript(`
-          (function() {
-            const args = ${inputJson};
-            const result = ${functionName}.apply(null, args);
-            return JSON.stringify(result);
-          })()
-        `);
-        
-        const resultJson = await callScript.run(context, { timeout: 1000 });
-        const actual = JSON.parse(resultJson);
-        
-        const passed = JSON.stringify(actual) === JSON.stringify(testCase.expected);
-        
-        results.push({
-          input: testCase.input,
-          expected: testCase.expected,
-          actual,
-          passed,
-          error: null
-        });
-        
-      } catch (error) {
-        results.push({
-          input: testCase.input,
-          expected: testCase.expected,
-          actual: null,
-          passed: false,
-          error: error.message
-        });
-      }
-      
-      context.release();
+
+  for (const testCase of testCases) {
+    try {
+      const sandbox = { Math, Error, JSON, console: { log: () => {} } };
+      const context = vm.createContext(sandbox);
+
+      // Run the function definition
+      vm.runInContext(code, context, { timeout: 2000 });
+
+      // Call the function with test input
+      const inputJson = JSON.stringify(testCase.input);
+      const callCode = `
+        (function() {
+          var args = ${inputJson};
+          var result = ${functionName}.apply(null, args);
+          return JSON.stringify(result);
+        })()
+      `;
+
+      const resultJson = vm.runInContext(callCode, context, { timeout: 1000 });
+      const actual = JSON.parse(resultJson);
+
+      const passed = JSON.stringify(actual) === JSON.stringify(testCase.expected);
+
+      results.push({
+        input: testCase.input,
+        expected: testCase.expected,
+        actual,
+        passed,
+        error: null
+      });
+    } catch (error) {
+      results.push({
+        input: testCase.input,
+        expected: testCase.expected,
+        actual: null,
+        passed: false,
+        error: error.message
+      });
     }
-  } finally {
-    isolate.dispose();
   }
-  
+
   return results;
 }
 
@@ -191,74 +175,67 @@ async function validateCalculatorCode(code, testCases) {
     };
   }
 
-  const isolate = new ivm.Isolate({ memoryLimit: 32 });
-  const context = await isolate.createContext();
-  const jail = context.global;
-  await jail.set('global', jail.derefInto());
-
   const results = [];
   let allPassed = true;
 
   try {
-    // 1. Compile user code
-    const script = await isolate.compileScript(code);
-    await script.run(context, { timeout: 1000 });
+    // Create a sandbox with necessary globals
+    const sandbox = { Math, Error, JSON, console: { log: () => {} } };
+    const context = vm.createContext(sandbox);
 
-    // 2. Instantiate calculator
-    // Check if class exists first
-    const checkClassScript = await isolate.compileScript('typeof ScientificCalculator !== "undefined"');
-    const exists = await checkClassScript.run(context);
-    
+    // 1. Run user code (class definition)
+    vm.runInContext(code, context, { timeout: 2000 });
+
+    // 2. Check if class exists
+    const exists = vm.runInContext('typeof ScientificCalculator !== "undefined"', context, { timeout: 500 });
     if (!exists) {
       throw new Error('ScientificCalculator class not defined');
     }
 
-    await isolate.compileScript('const calc = new ScientificCalculator();').then(s => s.run(context));
-
-    // 3. Run test cases
+    // 3. Run test cases — each gets a fresh instance
     for (const test of testCases) {
       const { method, args, expected } = test;
       const argsJson = JSON.stringify(args);
-      
+
       try {
-        const testScript = await isolate.compileScript(`
+        // Create fresh instance + run test in one go
+        const testCode = `
           (function() {
             try {
-              if (typeof calc['${method}'] !== 'function') {
-                 return JSON.stringify({ error: 'Method not found' });
+              var testCalc = new ScientificCalculator();
+              if (typeof testCalc['${method}'] !== 'function') {
+                return JSON.stringify({ error: 'Method not found' });
               }
-              const res = calc['${method}'](...${argsJson});
+              var res = testCalc['${method}'].apply(testCalc, ${argsJson});
               return JSON.stringify({ result: res });
             } catch (e) {
               return JSON.stringify({ error: e.message });
             }
           })()
-        `);
-        
-        const resultJson = await testScript.run(context, { timeout: 500 });
+        `;
+
+        const resultJson = vm.runInContext(testCode, context, { timeout: 1000 });
         const result = JSON.parse(resultJson);
-        
+
         let passed = false;
         let actual = null;
         let error = null;
 
         if (result.error) {
           if (expected === 'Error') {
-             passed = true; // Expected an error and got one
-             actual = 'Error';
+            passed = true;
+            actual = 'Error';
           } else {
-             passed = false;
-             error = result.error;
+            passed = false;
+            error = result.error;
           }
         } else {
           actual = result.result;
-          // Simple equality check for primitives
-          // For 'Error' expectation, we failed because we got a result
           if (expected === 'Error') {
             passed = false;
             error = `Expected Error but got ${actual}`;
           } else {
-             passed = JSON.stringify(actual) === JSON.stringify(expected);
+            passed = JSON.stringify(actual) === JSON.stringify(expected);
           }
         }
 
@@ -299,8 +276,6 @@ async function validateCalculatorCode(code, testCases) {
       safetyCheck,
       results: []
     };
-  } finally {
-    isolate.dispose();
   }
 }
 
