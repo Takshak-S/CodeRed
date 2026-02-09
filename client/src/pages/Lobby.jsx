@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { MessageCircle, Send, LogOut, AlertCircle } from "lucide-react";
+import { MessageCircle, Send, LogOut, AlertCircle, Bug, Search, Award } from "lucide-react";
 import socket from "../socket";
-
-/* ---------------- Constants ---------------- */
 
 const COLORS = [
   "#00ff88",
@@ -128,7 +126,7 @@ export default function GameLobby() {
 
   const readyCount = players.filter((p) => p.isReady).length;
   // const allPlayersReady = players.length >= 2 && players.every((p) => p.isReady); // Min 2 players logic
-  const allPlayersReady = players.length > 0 && players.every((p) => p.isReady); // User's logic (simplified)
+  const allPlayersReady = players.length > 0 && players.every((p) => p.isReady);
 
   /* ---------------- Socket Lifecycle ---------------- */
 

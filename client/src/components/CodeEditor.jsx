@@ -408,11 +408,27 @@ function CodeEditor({
 
     // Use socket instead of HTTP
     if (window.gameSocket) {
-      window.gameSocket.emit('validateBugFix', (response) => {
+      window.gameSocket.emit('validateBugFix', { code: currentCode }, (response) => {
+        console.log('Validation response:', response);
         if (response.success) {
-          const icon = response.bugFixed ? '✅' : '❌';
-          alert(`${icon} ${response.message}`);
-          console.log('Validation result:', response);
+          let message = response.message;
+          
+          if (response.results) {
+             const failures = response.results.filter(r => !r.passed);
+             if (failures.length > 0) {
+                const details = failures.map(f => {
+                  let reason = f.error;
+                  if (!reason && f.expected !== undefined) {
+                    reason = `Expected ${JSON.stringify(f.expected)}, got ${JSON.stringify(f.actual)}`;
+                  }
+                  return `❌ ${f.method}: ${reason}`;
+                }).join('\n');
+                
+                message += `\n\n${failures.length} Issues Found:\n${details}`;
+             }
+          }
+          
+          alert(message);
         } else {
           alert(`Error: ${response.error || 'Validation failed'}`);
         }

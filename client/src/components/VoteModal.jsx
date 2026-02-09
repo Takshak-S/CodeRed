@@ -1,6 +1,14 @@
-import React from 'react';
+import React from "react";
+import { X, Check, SkipForward } from "lucide-react";
 
-const PLAYER_COLORS = ['#00ddff', '#00ff88', '#dd00ff', '#ffcc00', '#ff9900', '#ff3366'];
+const PLAYER_COLORS = [
+  "#00ddff",
+  "#00ff88",
+  "#dd00ff",
+  "#ffcc00",
+  "#ff9900",
+  "#ff3366",
+];
 
 function VoteModal({
   isOpen,
@@ -17,19 +25,22 @@ function VoteModal({
   if (!isOpen || !voteData) return null;
 
   // Filter out current player and disabled players from voting options
-  const votablePlayers = players.filter((p) => p.id !== currentPlayerId && !p.disabled);
+  const votablePlayers = players.filter(
+    (p) => p.id !== currentPlayerId && !p.disabled,
+  );
 
   return (
     <div className="vote-modal-overlay">
       <div className="vote-modal-content">
-        <h2>🗳️ VOTE TO KICK A PLAYER</h2>
+        <h2>VOTE TO KICK A PLAYER</h2>
         <p className="vote-modal-subtitle">
-          <strong>{buzzedPlayerName}</strong> buzzed! Vote for who to kick, or skip.
+          <strong>{buzzedPlayerName}</strong> buzzed! Vote for who to kick, or
+          skip.
         </p>
 
         {isDisabled ? (
           <div className="disabled-message">
-            <span className="icon">❌</span>
+            <X size={32} className="icon" />
             <p>You are disabled and cannot vote</p>
           </div>
         ) : (
@@ -54,13 +65,18 @@ function VoteModal({
                 <button
                   key={player.id}
                   onClick={() => onCastVote(player.id)}
-                  className={`vote-player-btn ${hasVoted ? 'disabled' : ''}`}
+                  className={`vote-player-btn ${hasVoted ? "disabled" : ""}`}
                   disabled={hasVoted}
-                  style={{ borderColor: PLAYER_COLORS[idx % PLAYER_COLORS.length] }}
+                  style={{
+                    borderColor: PLAYER_COLORS[idx % PLAYER_COLORS.length],
+                  }}
                 >
                   <span
                     className="player-indicator"
-                    style={{ backgroundColor: PLAYER_COLORS[idx % PLAYER_COLORS.length] }}
+                    style={{
+                      backgroundColor:
+                        PLAYER_COLORS[idx % PLAYER_COLORS.length],
+                    }}
                   />
                   {player.name}
                 </button>
@@ -69,15 +85,23 @@ function VoteModal({
 
             <button
               onClick={onSkipVote}
-              className={`skip-vote-btn ${hasVoted ? 'disabled' : ''}`}
+              className={`skip-vote-btn ${hasVoted ? "disabled" : ""}`}
               disabled={hasVoted}
             >
-              ⏭️ SKIP VOTE
+              <SkipForward
+                size={14}
+                style={{ display: "inline", marginRight: "6px" }}
+              />{" "}
+              SKIP VOTE
             </button>
 
             {hasVoted && (
               <p className="voted-message">
-                ✓ Your vote has been recorded. Waiting for others...
+                <Check
+                  size={14}
+                  style={{ display: "inline", marginRight: "6px" }}
+                />{" "}
+                Your vote has been recorded. Waiting for others...
               </p>
             )}
           </>
@@ -109,7 +133,7 @@ function VoteModal({
           width: 100%;
           max-height: 90vh;
           overflow: auto;
-          font-family: 'Share Tech Mono', monospace;
+          font-family: "Share Tech Mono", monospace;
         }
 
         .vote-modal-content h2 {
@@ -168,7 +192,7 @@ function VoteModal({
           color: #00ddff;
           padding: 15px;
           border-radius: 6px;
-          font-family: 'Share Tech Mono', monospace;
+          font-family: "Share Tech Mono", monospace;
           font-size: 12px;
           cursor: pointer;
           transition: all 0.3s ease;
@@ -207,7 +231,7 @@ function VoteModal({
           color: #ffcc00;
           padding: 15px;
           border-radius: 6px;
-          font-family: 'Share Tech Mono', monospace;
+          font-family: "Share Tech Mono", monospace;
           font-size: 12px;
           font-weight: bold;
           cursor: pointer;
@@ -256,8 +280,13 @@ function VoteModal({
         }
 
         @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
+          }
         }
 
         @media (max-width: 600px) {

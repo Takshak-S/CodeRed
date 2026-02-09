@@ -165,7 +165,7 @@ function setupYjsServer(server) {
     });
   });
 
-  console.log('📝 Yjs WebSocket server ready');
+  console.log('[YJS] WebSocket server ready');
   return wss;
 }
 

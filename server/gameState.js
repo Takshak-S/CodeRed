@@ -129,7 +129,22 @@ const codeSamples = [
         description: "memoryStore returns 0 instead of stored value",
         location: "Line 123",
         difficulty: "hard"
-      }
+      },
+    ],
+    testCases: [
+      { method: 'add', args: [10, 5], expected: 15 },
+      { method: 'subtract', args: [10, 4], expected: 6, description: 'Normal subtraction' }, 
+      { method: 'subtract', args: [5, 10], expected: -5, description: 'Negative result' },
+      { method: 'multiply', args: [3, 7], expected: 21 },
+      { method: 'divide', args: [20, 4], expected: 5 },
+      { method: 'divide', args: [5, 0], expected: 'Error', errorMsg: 'Cannot divide by zero' },
+      { method: 'power', args: [2, 4], expected: 16 },
+      { method: 'squareRoot', args: [25], expected: 5 },
+      { method: 'squareRoot', args: [-9], expected: 'Error', errorMsg: 'Cannot calculate square root of negative number' },
+      { method: 'increment', args: [9], expected: 10 },
+      { method: 'decrement', args: [10], expected: 9 },
+      { method: 'memoryStore', args: [123], expected: 123 },
+      { method: 'memoryRecall', args: [], expected: 123 }
     ]
   }
 ];

@@ -23,6 +23,7 @@ const {
 } = require("./utils");
 
 const { initializeRoomCode, getCurrentCode, cleanupRoom } = require('./yjsServer');
+const { validateCalculatorCode } = require('./validation');
 
 // Track socket to player/room mappings
 const socketToPlayer = new Map();
@@ -312,6 +313,98 @@ function setupSocketHandlers(io) {
 
       if (callback) callback({ success: true });
       // NOTE: No codeUpdated broadcast — Yjs WebSocket handles real-time sync
+    });
+
+    // VALIDATE BUG FIX
+    socket.on("validateBugFix", async ({ code }, callback) => {
+       const playerData = socketToPlayer.get(socket.id);
+       if (!playerData) return callback({ success: false, error: 'Not in a room' });
+
+       const { playerId, roomCode } = playerData;
+       const room = getRoom(roomCode);
+       
+       if (!room) return callback({ success: false, error: 'Room not found' });
+       
+       // Get assignment
+       let method = null;
+       if (room.currentCode && room.currentCode.bugAssignments) {
+         const bugAssignment = room.currentCode.bugAssignments.get(playerId);
+         if (bugAssignment) {
+            method = bugAssignment.method;
+            if (!method) {
+               // Fallback mapping
+               const bugIdToMethod = {
+                  'bug1': 'subtract',
+                  'bug2': 'increment',
+                  'bug3': 'divide',
+                  'bug4': 'squareRoot',
+                  'bug5': 'memoryStore'
+               };
+               method = bugIdToMethod[bugAssignment.id];
+            }
+         }
+       }
+
+       if (!method) {
+          // If debugging without assignment, maybe validate everything?
+          // Or return error if strict assignment required.
+          console.log(`Player ${playerId} has no bug assignment or method invalid`);
+       }
+
+       const FALLBACK_TEST_CASES = [
+          { method: 'add', args: [10, 5], expected: 15 },
+          { method: 'subtract', args: [10, 4], expected: 6, description: 'Normal subtraction' }, 
+          { method: 'subtract', args: [5, 10], expected: -5, description: 'Negative result' },
+          { method: 'multiply', args: [3, 7], expected: 21 },
+          { method: 'divide', args: [20, 4], expected: 5 },
+          { method: 'divide', args: [5, 0], expected: 'Error', errorMsg: 'Cannot divide by zero' },
+          { method: 'power', args: [2, 4], expected: 16 },
+          { method: 'squareRoot', args: [25], expected: 5 },
+          { method: 'squareRoot', args: [-9], expected: 'Error', errorMsg: 'Cannot calculate square root of negative number' },
+          { method: 'increment', args: [9], expected: 10 },
+          { method: 'decrement', args: [10], expected: 9 },
+          { method: 'memoryStore', args: [123], expected: 123 },
+          { method: 'memoryRecall', args: [], expected: 123 }
+       ];
+
+       const testCases = (room.currentCode?.testCases && room.currentCode.testCases.length > 0) 
+            ? room.currentCode.testCases 
+            : FALLBACK_TEST_CASES;
+       
+       console.log(`[Validation] Room ${roomCode}, Player ${playerId}. TestCases applied: ${testCases.length}`);
+       console.log(`[Validation] Using fallback? ${room.currentCode?.testCases?.length ? 'No' : 'Yes'}`);
+
+       // Run validation
+       const validation = await validateCalculatorCode(code, testCases);
+       console.log(`[Validation] Result: success=${validation.success}, allPassed=${validation.allPassed}, results=${validation.results?.length}`);
+       
+       if (!validation.success) {
+          return callback({ 
+            success: false, 
+            error: validation.error || 'Validation failed to run' 
+          });
+       }
+
+       // Check specific assignment
+       let assignedFixed = false;
+       if (method) {
+         const assignedResult = validation.results.find(r => r.method === method);
+         assignedFixed = assignedResult ? assignedResult.passed : false;
+       }
+       
+       // Check if ALL tests passed
+       const allPassed = validation.allPassed;
+
+       callback({
+         success: true,
+         assignedFixed,
+         allPassed,
+         bugMethod: method,
+         results: validation.results,
+         message: assignedFixed 
+            ? (allPassed ? 'PERFECT! All bugs fixed.' : `Good job! Your bug (${method}) is fixed, but the system is not fully operational yet.`)
+            : `Your assigned bug check (${method}) failed. Keep debugging.`
+       });
     });
 
     // CURSOR UPDATE (broadcast cursor position to other players)

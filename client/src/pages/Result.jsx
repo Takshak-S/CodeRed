@@ -1,6 +1,7 @@
 // Result page - Cyberpunk Neon UI
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Trophy, RotateCcw, DoorOpen } from 'lucide-react';
 import socket from '../socket';
 
 function Result() {
@@ -104,7 +105,6 @@ function Result() {
       <div className="result-content">
         {/* Header */}
         <div className="result-header">
-          <span className="game-over-emoji">🎊</span>
           <h1 className="game-over-title">GAME OVER</h1>
         </div>
 
@@ -181,10 +181,10 @@ function Result() {
         {/* Buttons */}
         <div className="result-buttons">
           <button className="btn-play-again" onClick={handlePlayAgain}>
-            🔄 PLAY AGAIN
+            <RotateCcw size={16} style={{marginRight: '8px'}} /> PLAY AGAIN
           </button>
           <button className="btn-leave" onClick={handleLeave}>
-            🚪 LEAVE GAME
+            <DoorOpen size={16} style={{marginRight: '8px'}} /> LEAVE GAME
           </button>
         </div>
       </div>
